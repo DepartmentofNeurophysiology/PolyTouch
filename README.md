@@ -15,6 +15,6 @@ Run JAR file from windows command prompt window
 
 Run JAR file from MATLAB environment 
   - Run JAR file with "java -jar PolyTouch.jar"
- 	-	Run PolyTouch_Wrapper.m
+ 	 -	Run PolyTouch_Wrapper.m
 
 PolyTouch_MATLABwrapper
