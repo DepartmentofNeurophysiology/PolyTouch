@@ -15,7 +15,7 @@ From the MATLAB environment
 
 From the windows command prompt window (standalone)
   - Open windows command prompt window
-  - change directory to file location (i.e. "cd .../PolyTouch.jar")
+  - Change directory to file location (i.e. "cd .../PolyTouch.jar")
   - Run JAR file with "java -jar PolyTouch.jar"
 
 # SesFileStart
