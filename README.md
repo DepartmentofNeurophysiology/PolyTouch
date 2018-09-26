@@ -14,7 +14,8 @@ From the MATLAB environment
   - Run PolyTouch_Wrapper.m
 
 From the windows command prompt window (standalone)
-  - Open windows command prompt window > change directory to file location (i.e. "cd .../PolyTouch.jar")
+  - Open windows command prompt window
+  - change directory to file location (i.e. "cd .../PolyTouch.jar")
   - Run JAR file with "java -jar PolyTouch.jar"
 
 # SesFileStart
