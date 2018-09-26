@@ -19,18 +19,18 @@ From the windows command prompt window (standalone)
 
 # SesFileStart
 Specify session variables
-[1] animal identity (animID) - e.g. 1
-[2] protocol number (protocolID) - e.g. 1
-[3] session number (sessionID) - e.g. 1
-[4] session duration (sessionDur, in sec) - e.g. 60
-[5] targetZoneX (in pixels) - e.g. 400
-[6] targetZoneY (in pixels) - e.g. 300
-[7] targetZoneRad (in cm) - e.g. 5 
-[8] pixelconv (pixel-to-cm-conversion factor) - e.g. 0.0273
-[9] toneAmp (in volt) - e.g. 10 
-[10] toneFreq (in hertz) - e.g. 150
-[11] toneDur (in sec) - e.g. 1
-[12] toneFs (in hertz) - e.g. 14400
-[13] tonePeriod (in sec) - e.g. 1
+- [1] animal identity (animID) - e.g. 1
+- [2] protocol number (protocolID) - e.g. 1
+- [3] session number (sessionID) - e.g. 1
+- [4] session duration (sessionDur, in sec) - e.g. 60
+- [5] targetZoneX (in pixels) - e.g. 400
+- [6] targetZoneY (in pixels) - e.g. 300
+- [7] targetZoneRad (in cm) - e.g. 5 
+- [8] pixelconv (pixel-to-cm-conversion factor) - e.g. 0.0273
+- [9] toneAmp (in volt) - e.g. 10 
+- [10] toneFreq (in hertz) - e.g. 150
+- [11] toneDur (in sec) - e.g. 1
+- [12] toneFs (in hertz) - e.g. 14400
+- [13] tonePeriod (in sec) - e.g. 1
 
 
