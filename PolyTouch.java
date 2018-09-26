@@ -20,7 +20,6 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JMenuBar;
 import javax.swing.SwingUtilities;
-// import org.apache.log4j.BasicConfigurator;
 import javax.swing.BoxLayout;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
