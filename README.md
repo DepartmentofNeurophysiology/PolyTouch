@@ -7,7 +7,7 @@ Download JAR file
 
 Download sesFileStart and save in directory C:/Users/Public
 
-Run JAR file by a double mouse click (left)
+Run JAR file by a double (left) mouse click 
 
 Run JAR file from windows command prompt window
   - Open windows command prompt window > change directory to file location (i.e. "cd ...\PolyTouch.jar")
