@@ -7,10 +7,13 @@ Download JAR file
 
 Download sesFileStart and save in directory C:/Users/Public
 
+Run JAR file by a double mouse click (left)
+
 Run JAR file from windows command prompt window
- 		- Open windows command prompt window > change directory to file location (i.e. "cd ...\PolyTouch.jar")
- 	 - Run JAR file with "java -jar PolyTouch.jar"
+  - Open windows command prompt window > change directory to file location (i.e. "cd ...\PolyTouch.jar")
+  - Run JAR file with "java -jar PolyTouch.jar"
 Run JAR file from MATLAB environment 
- 		-	Run PolyTouch_Wrapper.m
+  - Run JAR file with "java -jar PolyTouch.jar"
+ 	-	Run PolyTouch_Wrapper.m
 
 PolyTouch_MATLABwrapper
