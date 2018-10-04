@@ -136,7 +136,7 @@ class TouchStateItem {
 
 // Display locomotion parameters of animal
 class TouchStateLog {
-	private static final int MAX_NUM_ITEMS = 5; // 10; //25;
+	private static final int MAX_NUM_ITEMS = 10; //25;
 	ArrayList< TouchStateItem > ITEMS = new ArrayList< TouchStateItem >();
 
 	public void log( String message ) {
@@ -488,7 +488,7 @@ class TriggerSound {
 	private static byte[] BUFFER;         // initialise internal buffer
 	private static int bufferSize = 0;    // number of samples currently in internal buffer	
 	private static float GAIN = 0f; // set at 0f initially to ignore first beep
-
+	
 	// open up new audio stream
 	private static void init() {
 		try {
@@ -499,8 +499,16 @@ class TriggerSound {
 			LINE.open(format, SAMPLE_BUFFER_SIZE * BYTES_PER_SAMPLE); // original code; acquires the system resources
 
 			// Modify master audio volume of system
-			FloatControl volume = (FloatControl) LINE.getControl(FloatControl.Type.MASTER_GAIN);
-			volume.setValue(volume.getMinimum() * (1 - GAIN));
+			// trigger sound tone
+			if (sessionID == 2) {
+				GAIN = 0.6f; // low (39dB)
+			} else if (sessionID == 3) {
+				GAIN = 0.8f; // intermediate (49dB)
+			} else if (sessionID == 4) {
+				GAIN = 1f; // high (59dB)
+			}			
+			FloatControl VOLUME = (FloatControl) LINE.getControl(FloatControl.Type.MASTER_GAIN);
+			VOLUME.setValue(VOLUME.getMinimum() * (1 - GAIN));
 
 			// the internal buffer is a fraction of the actual buffer size, this choice is arbitrary
 			// it gets divided because we can't expect the buffered data to line up exactly with when
@@ -514,7 +522,6 @@ class TriggerSound {
 
 		// no sound gets made before this call (clean sound)
 		LINE.start();
-
 	}
 
 	// Close standard audio.
@@ -579,7 +586,8 @@ class TriggerSound {
 	double relDistLast = 0;
 	double lastTime = 0;
 	double lastEvent = 0;
-
+	
+	// alternative method (to avoid screeching sound)
 	void playSoundStatic() {
 		init();
 		play(createSineWave(toneFreq,sessionDur));
@@ -603,26 +611,21 @@ class TriggerSound {
 			lastTime = Double.parseDouble(lastTimeString);
 			relDistLast = Double.parseDouble(relDistLastString);
 			lastEvent = Double.parseDouble(lastEventString);
-
+			
 			// Stimulus condition 1: if animal is in target zone
 			// Stimulus condition 2: only trigger feedback if PolyTouchGUI is running (tracked time > 0.0 sec)			
 			// optional: create stimulus protocol where condition depends on relative distance and basic behavioural state (e.g. mobile vs immobile)
 			if (relDistLast < targetZoneRad && lastTime > 0.0) {
-				// System.out.println("detected");
-				// trigger sound tone
-				if (sessionID == 2) {
-					GAIN = 0.6f; // low (39dB)
-				} else if (sessionID == 3) {
-					GAIN = 0.8f; // intermediate (49dB)
-				} else if (sessionID == 4) {
-					GAIN = 1f; // high (59dB)
-				}
-
+				// play sound; original approach (with screeching sound)
+				init();
+				play(createSineWave(toneFreq,toneDur));
+				// close();
+				
 				// Save feedback trigger time stamp in external file
 				Object content[]; 
 				BufferedWriter varout = null;
 				endTimeNs2 = (System.nanoTime() - startTime2 - dStartTime2); // compute elapsed time in nanoseconds (relative from start time first loop)
-
+				
 				// define content of external file
 				content = new Object[] {relDistLast,endTimeNs2};
 				String dataPre = Arrays.toString(content);
@@ -648,12 +651,7 @@ class TriggerSound {
 					}
 				}
 			} // end if within border
-			else {
-				GAIN = 0f;
-				//close(); // do not close audio stream, because we want a discrete tone (continuous tone until condition is not met)
-			}
-			FloatControl volume = (FloatControl) LINE.getControl(FloatControl.Type.MASTER_GAIN);
-			volume.setValue(volume.getMinimum() * (1 - GAIN));
+			
 		} // end check if sesFile exists
 	} // end method generate sound
 
@@ -956,16 +954,7 @@ public class PolyTouch {
 			// schedule feedback protocol 1: 
 			// generate discrete 450Hz tone after delay of 0 ms (arg2) every 1 ms (arg3)
 			if (protocolID == 1) {
-				if (sessionID != 5) { // session 2-4; only provide feedback for non-baseline sessions	
-					// play sound continuously without click (issue: sound doesn't have enough time to properly play out entire sine wave)
-					Timer timerAudio = new Timer();
-					timerAudio.scheduleAtFixedRate(
-							new TimerTask() {
-								public void run() {
-									TriggerSound playSoundNow = new TriggerSound();
-									playSoundNow.playSoundStatic();
-								} // end run 
-							},0,(long) sessionDur*1000); // arg2 = delay(ms), arg3 = period(ms)				
+				if (sessionID != 5) { // session 2-4; only provide feedback for non-baseline sessions					
 					Timer timerChangeAudio = new Timer();
 					timerChangeAudio.scheduleAtFixedRate(
 							new TimerTask() {
