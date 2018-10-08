@@ -41,7 +41,7 @@ _line #&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;session variable_
 This MATLAB script generates a session file (in .txt format) that specifies the protocol and session variables defined by the user and  calls PolyTouch to track the spatial position (X,Y in pixels) of unrestrained animals and trigger feedback in close-loop based on the animal position. PolyTouch is terminated when the user-specified session duration is reached or can be interrupted anytime if the user closes the graphical user interface (GUI).
 
 #### OUTPUT
-#### (1) sessionfile (a struct) with fields  
+#### sessionfile (a struct) with fields  
 sessionFile.animalID - animal identity number  
 sessionFile.protocolID - protocol number  
 sessionFile.sessionID - session number  
@@ -65,6 +65,6 @@ sessionFile.toneFreq - frequency of feedback tone
 sessionFile.toneDur - duration of feedback tone  
 sessionFile.toneFs - sampling frequency of feedback tone  
 sessionFile.tonePeriod - period of feedback tone  
-#### (2) figure file (a .pdf file)
+#### figure file (a .pdf file)
 
 
