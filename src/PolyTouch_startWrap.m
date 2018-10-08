@@ -6,14 +6,31 @@
 % 
 % PolyTouch is terminated when the user-specified session duration is reached or can be interrupted anytime if the user closes the graphical user interface (GUI).
 % OUTPUT
-% - sessionFile (a struct) with fields
-%       - track.x: is the x coordinate of mouse location in pixels.
-%       - track.y: is the y coordinate of mouse location in pixels.
-%       - track.ts: is the timestamp of sampled mouse coordinates in s.
-%       - track.relDistTarget: is the relative distance from target location in cm.
-%       - % optional: head.angle: is the polar coordinate in degrees, radius as the relative distance from target location in cm.
-%       - % optional: head.speed in cm/s
-% - figure file (a pdf file)
+% 1) sessionFile (a struct) with fields
+% - sessionFile.animalID - animal identity number
+% - sessionFile.protocolID - protocol number
+% - sessionFile.sessionID - session number
+% - sessionFile.sessionDur - session duration, in sec
+% - sessionFile.date - datestamp
+% - sessionFile.targetZone - xy coordinates target zone, in pixels
+% - sessionFile.targetZoneRad - radius target zone, in cm
+% - sessionFile.tag - tag with date, animal id, protocol id, session id for labeling purposes
+% - sessionFile.track.x - animal x position, in pixels
+% - sessionFile.track.y - animal y position, in pixels
+% - sessionFile.track.pressure
+% - sessionFile.track.pointerID - identity of touch point
+% - sessionFile.track.relDistTarget - relative distance to target zone, in cm
+% - sessionFile.track.ts - elapsed time from start, in sec
+% - sessionFile.track.eventType - behavioral state (mobile, immobile)
+% - sessionFile.track.elapDistTot - total elapsed distance, in cm
+% - sessionFile.head.angle - heading angle, in degrees
+% - sessionFile.head.speed - heading speed, in cm/sec
+% - sessionFile.toneAmp - amplitude of feedback tone
+% - sessionFile.toneFreq - frequency of feedback tone
+% - sessionFile.toneDur - duration of feedback tone
+% - sessionFile.toneFs - sampling frequency of feedback tone
+% - sessionFile.tonePeriod - period of feedback tone
+% 2) figure file (a pdf file)
 % 
 % PROTOCOL DESCRIPTION
 % The current wrapper provides the user with two feedback protocols:
