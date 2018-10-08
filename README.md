@@ -36,3 +36,35 @@ _line #&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;session variable_
 11&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;toneDur (in seconds) - e.g. `1`  
 12&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;toneFs (in hertz) - e.g. `14400`  
 13&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tonePeriod (in seconds) - e.g. `1` 
+
+## PolyTouch_startWrap
+This MATLAB script generates a session file (in .txt format) that specifies the protocol and session variables defined by the user and  calls PolyTouch to track the spatial position (X,Y in pixels) of unrestrained animals and trigger feedback in close-loop based on the animal position. PolyTouch is terminated when the user-specified session duration is reached or can be interrupted anytime if the user closes the graphical user interface (GUI).
+
+#### OUTPUT
+#### (1) sessionfile (a struct) with fields  
+sessionFile.animalID - animal identity number  
+sessionFile.protocolID - protocol number  
+sessionFile.sessionID - session number  
+sessionFile.sessionDur - session duration, in sec  
+sessionFile.date - datestamp  
+sessionFile.targetZone - xy coordinates target zone, in pixels  
+sessionFile.targetZoneRad - radius target zone, in cm  
+sessionFile.tag - tag with date, animal id, protocol id, session id for labeling purposes  
+sessionFile.track.x - animal x position, in pixels  
+sessionFile.track.y - animal y position, in pixels  
+sessionFile.track.pressure  
+sessionFile.track.pointerID - identity of touch point  
+sessionFile.track.relDistTarget - relative distance to target zone, in cm  
+sessionFile.track.ts - elapsed time from start, in sec  
+sessionFile.track.eventType - behavioral state (mobile, immobile)  
+sessionFile.track.elapDistTot - total elapsed distance, in cm  
+sessionFile.head.angle - heading angle, in degrees  
+sessionFile.head.speed - heading speed, in cm/sec  
+sessionFile.toneAmp - amplitude of feedback tone  
+sessionFile.toneFreq - frequency of feedback tone  
+sessionFile.toneDur - duration of feedback tone  
+sessionFile.toneFs - sampling frequency of feedback tone  
+sessionFile.tonePeriod - period of feedback tone  
+#### (2) figure file (a .pdf file)
+
+
