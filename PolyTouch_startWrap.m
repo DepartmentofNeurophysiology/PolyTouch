@@ -1,5 +1,4 @@
-sesFileStart = PolyTouch_startWrap();
-%% [POLYTOUCH_STARTWRAP] This function generates a session file (in .txt format)
+%% [POLYTOUCH_STARTWRAP] This MATLAB script generates a session file (in .txt format)
 % that specifies the protocol and session variables defined by the user and
 % calls PolyTouch to track the spatial position (X,Y in pixels) of unrestrained
 % animals and trigger feedback in close-loop based on the animal position.
