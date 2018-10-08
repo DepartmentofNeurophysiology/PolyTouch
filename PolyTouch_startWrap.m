@@ -229,7 +229,7 @@ disp('Initialising PolyTouch...')
 system('java -jar PolyTouch.jar')
 
 % if sessionDur is reached
-disp('Mouse tracking terminated...')
+disp('PolyTouch is terminated...')
 
 %% 3. Generate post-tracking session file
 filenameJ = sprintf('C:\Users\Public\sesFile_%.0fP%.0fS%.0f.txt',animalID,protocolID,sessionID);
