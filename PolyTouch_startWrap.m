@@ -232,7 +232,7 @@ system('java -jar PolyTouch.jar')
 disp('PolyTouch is terminated...')
 
 %% 3. Generate post-tracking session file
-filenameJ = sprintf('C:\Users\Public\sesFile_%.0fP%.0fS%.0f.txt',animalID,protocolID,sessionID);
+filenameJ = sprintf('C:\Users\Public\sesFile_%.fP%.fS%.f.txt',animalID,protocolID,sessionID);
 delimiterJ = ' ';
 fileIDJ = fopen(filenameJ,'r');
 tempSpecJ = '%f';
