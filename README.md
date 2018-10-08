@@ -7,19 +7,19 @@ The tracking algorithm makes use of open source jni4net (https://github.com/jni4
 Download files (ZIP)
 
 __Run as a standalone__
-  - Run `PolyTouch.jar` with a double left mouse click 
+  - Run `PolyTouch.jar` with a double left mouse click (file is located in GitHub directory `.../PolyTouch/lib`)
 
 __Run from the MATLAB environment__
 Requirements: 
   - Specify session variables in `sesFileStart.txt` (! file must be saved in directory `C:/Users/Public`)
-  - Run `PolyTouch_startWrap.m`
+  - Run `PolyTouch_startWrap.m` (file is located in GitHub directory `.../PolyTouch/src`)
 
 From the windows command prompt window (standalone)
   - Open windows command prompt window
   - Change directory to file location `cd .../PolyTouch.jar`
   - Run JAR file `java -jar PolyTouch.jar`
 
-## SesFileStart.txt
+## SesFileStart.txt 
 Specify session variables in a textfile (! file must be saved in directory `C:/Users/Public`). Example: the user can specify the animal identity at the first line 1 of the text file, the protocol number at the second line 2, and so forth.
 
 _line #&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;session variable_  
