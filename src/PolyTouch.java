@@ -1,3 +1,14 @@
+/** POLYTOUCH - motion tracking of single and multiple contact points with close-loop feedback.
+*
+* --- DISCLAIMER 04-2019 ---------------------------------------------------------------------------------------------------------------
+* - PolyTouch retrieves simultaneous contact points with TouchInfoArray{}, TouchStateItem{}, TouchStateLog{}, PointerGUI ('PolyTouchGUI')
+*   and external library JWinPointer.jar written and made available by Michael McGuffin - see http://www.michaelmcguffin.com/code/JWinPointer/)
+* - PolyTouch uses the audio out jack of the computer as a communication port to deliver control signals to external devices and generates tones with
+*   playTone() and createSineWave() obtained and edited from StdAudio.java available at https://introcs.cs.princeton.edu/java/stdlib/StdAudio.java.html 
+* ---------------------------------------------------------------------------------------------------------------------------------------
+*
+* */
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,7 +31,6 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JMenuBar;
 import javax.swing.SwingUtilities;
-// import org.apache.log4j.BasicConfigurator;
 import javax.swing.BoxLayout;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -45,8 +55,8 @@ class TouchInfo {
 }
 
 // READ USER FILE 
-// This method is created to read user-specified session parameters (source: sessionFileJ.txt)
-//and returns file content as array if method readSesParams is called.
+// This method is created to read user-specified session parameters from an external ASCII file ('sesFileStart.txt')
+//and returns file content as array if readSesParams is called.
 class ReadSesFile {
 
 	static String[] readSesParams() {	
@@ -77,13 +87,12 @@ class ReadSesFile {
 		}
 		String[] readParams = list.toArray(new String[0]);
 		return readParams;
-
 	}
 }
 
 
-// Thread 1 - MOTION TRACKING ALGORITHM 
-// Multiple body parts (limb, tail, head) can be detected simultaneously, so we use an array to store information about the contacts.
+// TRACKING MODULE - performs motion tracking of single and multiple contact points retrieved using external library JWinPointer.jar
+// An array is generated to store information about each contact point.
 class TouchInfoArray {
 	public ArrayList< TouchInfo > array = new ArrayList< TouchInfo >();
 
@@ -200,7 +209,7 @@ class PolyTouchGUI extends JPanel implements PointerEventListener {
 		return new Dimension( 512, 512 );
 	}
 
-	// Initialise time tracking variables
+	// Initialise time tracking variables and make them global, so that they are accessible from other threads
 	public static long startTime = System.nanoTime(); long dStartTime = 0;
 	public static double endTime = 0;
 	static int staticCount = 0; 
@@ -223,10 +232,6 @@ class PolyTouchGUI extends JPanel implements PointerEventListener {
 
 	// Display contacts with contact id, x position, y position
 	public void paintComponent( Graphics g) {
-		if (endTime/1000000000 > sessionDur) {
-			System.out.println("Session duration is reached. Motion tracking is terminated...");
-			System.exit(0);
-		}
 
 		super.paintComponent( g );
 		Graphics2D DRAW = (Graphics2D)g;
@@ -241,108 +246,111 @@ class PolyTouchGUI extends JPanel implements PointerEventListener {
 
 		// Loop through each multi-touch event
 		if (TOUCHARRAY.array.size() != 0) {
+			//startTime_BC = System.nanoTime(); // elapsed time to compute XY->COM,bodyspeed,etc. variables
+
 			for ( int i = 0; i < TOUCHARRAY.array.size(); ++i ) {
 				TouchInfo TOUCH = TOUCHARRAY.array.get(i);
 
 				// Ignore computer mouse events
-				//if (TOUCH.pointerID != 1) { 
-				staticCount ++; // keep track of touches detected simultaneously
+				if (TOUCH.pointerID != 1) { 
+					staticCount ++; // keep track of touches detected simultaneously
 
-				// Save touch variables in object array (x,y position, pressure, id touch) - overwrite file or create new if file does not exist
-				if (staticCount == 1) { // get elapsed time for first loop, so that elapsed time can be computed relative from this time point
-					dStartTime = System.nanoTime() - startTime;
-				} endTime = (System.nanoTime() - startTime - dStartTime); // compute elapsed time in nanoseconds (relative from start time first loop)
+					// Save touch variables in object array (x,y position, pressure, id touch) - overwrite file or create new if file does not exist
+					if (staticCount == 1) { // get elapsed time for first loop, so that elapsed time can be computed relative from this time point
+						dStartTime = System.nanoTime() - startTime;
+					} endTime = (System.nanoTime() - startTime - dStartTime); // compute elapsed time in nanoseconds (relative from start time first loop)
 
-				// update time stamp
-				tsOld = tsNew;
-				tsNew = endTime;
+					// update time stamp
+					tsOld = tsNew;
+					tsNew = endTime;
 
-				// store multi-touch events detected at the same time
-				xSUM = xSUM+TOUCH.x; 
-				ySUM = ySUM+TOUCH.y;
-				nTouches = nTouches+1;
-				DRAW.setColor( Color.WHITE );
+					// store multi-touch events detected at the same time
+					xSUM = xSUM+TOUCH.x; 
+					ySUM = ySUM+TOUCH.y;
+					nTouches = nTouches+1;
+					DRAW.setColor( Color.WHITE );
 
-				// draw multi-touches
-				TOUCHPOINT.setFrame( TOUCH.x-TOUCHRAD, TOUCH.y-TOUCHRAD, 2*TOUCHRAD, 2*TOUCHRAD );
-				DRAW.draw( TOUCHPOINT );
+					// draw multi-touches
+					TOUCHPOINT.setFrame( TOUCH.x-TOUCHRAD, TOUCH.y-TOUCHRAD, 2*TOUCHRAD, 2*TOUCHRAD );
+					DRAW.draw( TOUCHPOINT );
 
-				LINE.setLine( TOUCH.x, TOUCH.y, TOUCH.x+TOUCHRAD, TOUCH.y+2*TOUCHRAD );
+					LINE.setLine( TOUCH.x, TOUCH.y, TOUCH.x+TOUCHRAD, TOUCH.y+2*TOUCHRAD );
+					DRAW.draw( LINE );
+					String STRING = "x,y,id = " + TOUCH.x + "," + TOUCH.y + "," + TOUCH.pointerID;
+					DRAW.drawString(STRING,TOUCH.x+TOUCHRAD,TOUCH.y+3*TOUCHRAD);
+				}
+
+				// compute centre-of-mass (COM) - only if touches are detected (nTouches != 0), otherwise read previous COM
+				double xCOMTemp = xSUM/nTouches;
+				double yCOMTemp = ySUM/nTouches;
+				if (Double.isNaN(xCOMTemp)) {
+					xCOMTemp = xCOMTempOld;
+					yCOMTemp = yCOMTempOld;
+				} else {
+					xCOMTempOld = xCOMTempNew;
+					yCOMTempOld = yCOMTempNew;
+					xCOMTempNew = xCOMTemp;
+					yCOMTempNew = yCOMTemp;
+				}
+
+				// interpolate centre-of-mass (COM) with last 4 COMs
+				xCOM4 = xCOM3; xCOM3 = xCOM2; xCOM2 = xCOM1;
+				xCOM1 = xCOMTemp; // update xCOM
+				xCOM = (xCOM1+xCOM2+xCOM3+xCOM4)/4;
+				xCOMOld = xCOMNew; xCOMNew = xCOM;
+				yCOM4 = yCOM3; yCOM3 = yCOM2; yCOM2 = yCOM1;
+				yCOM1 = yCOMTemp; // update yCOM
+				yCOM = (yCOM1+yCOM2+yCOM3+yCOM4)/4;
+				yCOMOld = yCOMNew; yCOMNew = yCOM;
+
+				// compute walked distance (cm)
+				elapDist = (Math.sqrt(Math.pow(xCOMOld-xCOMNew,2) + Math.pow(yCOMOld-yCOMNew,2)))*pixelconv;
+				elapDistOld = elapDistNew; elapDistNew = elapDist; // update variables
+				elapDistTot = elapDistTot+elapDist;
+
+				// compute distance to virtual target (in cm)
+				double dx = xCOM - targetZoneX; // relative distance of point x from centre target zone (in pixels)
+				double dy = yCOM - targetZoneY; // relative distance of point y from centre  target zone (in pixels)
+				relDist = (Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2)))*pixelconv; // compute relative distance of point x,y from target centerMagnet (in pixels)
+
+				// compute walked speed (cm/s)
+				tempSpeed = Math.abs(elapDistOld-elapDist)/((tsNew-tsOld)/1000000000);
+				if (tempSpeed > 100) {
+					bodySpeed = 0;
+				} else {
+					bodySpeed = tempSpeed;
+				}
+
+				// compute heading direction (deg) between previous and current COM point
+				relHeadTemp = Math.atan2((yCOM-yCOMOld),(xCOM-xCOMOld))*180/Math.PI; // relative angle robot to center of target area
+				if (relHeadTemp < 0) {
+					relHeadTemp = relHeadTemp+360; // positive angles only
+				} 
+				relHead8 = relHead7; relHead7 = relHead6; relHead6 = relHead5;
+				relHead5 = relHead4; 
+				relHead4 = relHead3; relHead3 = relHead2; relHead2 = relHead1;
+				relHead1 = relHeadTemp;
+				relHead = (relHead8+relHead7+relHead6+relHead5+relHead4+relHead3+relHead2+relHead1)/8;			
+
+				TARGETZONE.setFrame( targetZoneX-(targetZoneRad/pixelconv),targetZoneY-(targetZoneRad/pixelconv),targetZoneRad/pixelconv*2,targetZoneRad/pixelconv*2);			
+				DRAW.draw( TARGETZONE );
+
+				// draw centre point as a cross
+				LINE.setLine( xCOM,yCOM-TOUCHCOM, xCOM, yCOM+TOUCHCOM );
+				DRAW.setColor( Color.RED );
 				DRAW.draw( LINE );
-				String STRING = "x,y,id = " + TOUCH.x + "," + TOUCH.y + "," + TOUCH.pointerID;
-				DRAW.drawString(STRING,TOUCH.x+TOUCHRAD,TOUCH.y+3*TOUCHRAD);
-				// } // end comp
+				LINE.setLine( xCOM-TOUCHCOM,yCOM, xCOM+TOUCHCOM, yCOM );
+				DRAW.setColor( Color.RED );
+				DRAW.draw( LINE );
 
 			}
-
-			// compute centre-of-mass (COM) - only if touches are detected (nTouches != 0), otherwise read previous COM
-			double xCOMTemp = xSUM/nTouches;
-			double yCOMTemp = ySUM/nTouches;
-			if (Double.isNaN(xCOMTemp)) {
-				xCOMTemp = xCOMTempOld;
-				yCOMTemp = yCOMTempOld;
-			} else {
-				xCOMTempOld = xCOMTempNew;
-				yCOMTempOld = yCOMTempNew;
-				xCOMTempNew = xCOMTemp;
-				yCOMTempNew = yCOMTemp;
+			// Evaluate if session duration has been reached
+			if (endTime/1000000000 > sessionDur) {
+				System.out.println("Session duration is reached. Motion tracking is terminated...");
+				System.exit(0);
 			}
-
-			// interpolate centre-of-mass (COM) with last 4 COMs
-			xCOM4 = xCOM3; xCOM3 = xCOM2; xCOM2 = xCOM1;
-			xCOM1 = xCOMTemp; // update xCOM
-			xCOM = (xCOM1+xCOM2+xCOM3+xCOM4)/4;
-			xCOMOld = xCOMNew; xCOMNew = xCOM;
-			yCOM4 = yCOM3; yCOM3 = yCOM2; yCOM2 = yCOM1;
-			yCOM1 = yCOMTemp; // update yCOM
-			yCOM = (yCOM1+yCOM2+yCOM3+yCOM4)/4;
-			yCOMOld = yCOMNew; yCOMNew = yCOM;
-
-			// compute walked distance (cm)
-			elapDist = (Math.sqrt(Math.pow(xCOMOld-xCOMNew,2) + Math.pow(yCOMOld-yCOMNew,2)))*pixelconv;
-			elapDistOld = elapDistNew; elapDistNew = elapDist; // update variables
-			elapDistTot = elapDistTot+elapDist;
-
-			// compute distance to virtual target (in cm)
-			double dx = xCOM - targetZoneX; // relative distance of point x from centre target zone (in pixels)
-			double dy = yCOM - targetZoneY; // relative distance of point y from centre  target zone (in pixels)
-			relDist = (Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2)))*pixelconv; // compute relative distance of point x,y from target centerMagnet (in pixels)
-
-			// compute walked speed (cm/sec)
-			tempSpeed = Math.abs(elapDistOld-elapDist)/((tsNew-tsOld)/1000000000);
-			if (tempSpeed > 100) {
-				bodySpeed = 0;
-			} else {
-				bodySpeed = tempSpeed;
-			}
-
-			// compute heading direction (deg) between previous and current COM point
-			relHeadTemp = Math.atan2((yCOM-yCOMOld),(xCOM-xCOMOld))*180/Math.PI; // relative angle robot to center of target area
-			if (relHeadTemp < 0) {
-				relHeadTemp = relHeadTemp+360; // positive angles only
-			} 
-			relHead8 = relHead7; relHead7 = relHead6; relHead6 = relHead5;
-			relHead5 = relHead4; 
-			relHead4 = relHead3; relHead3 = relHead2; relHead2 = relHead1;
-			relHead1 = relHeadTemp;
-			relHead = (relHead8+relHead7+relHead6+relHead5+relHead4+relHead3+relHead2+relHead1)/8;
-
-			TARGETZONE.setFrame( targetZoneX-(targetZoneRad/pixelconv),targetZoneY-(targetZoneRad/pixelconv),targetZoneRad/pixelconv*2,targetZoneRad/pixelconv*2);			
-			DRAW.draw( TARGETZONE );
-
-			// draw centre point as a cross
-			/*LINE.setLine( xCOM,yCOM-TOUCHCOM, xCOM, yCOM+TOUCHCOM );
-			DRAW.setColor( Color.RED );*/
-			LINE.setLine( xCOM,yCOM-TOUCHCOM, xCOM, yCOM+TOUCHCOM );
-			DRAW.setColor( Color.RED );
-
-			DRAW.draw( LINE );
-			LINE.setLine( xCOM-TOUCHCOM,yCOM, xCOM+TOUCHCOM, yCOM );
-			DRAW.setColor( Color.RED );
-			DRAW.draw( LINE );
-
-		} 
-	} // ignore computer mouse
+		}
+	} 
 
 	public void pointerXYEvent(int deviceType, int pointerID, int eventType, boolean inverted, int x, int y, int pressure) {
 		Point TOUCH = SwingUtilities.convertPoint(ROOTCOMPONENT, x, y, this);
@@ -360,12 +368,10 @@ class PolyTouchGUI extends JPanel implements PointerEventListener {
 		// Store data in external text file
 		Object content[]; 
 		BufferedWriter varout = null;
-
 		content = new Object[] {x, y, xCOM, yCOM,relHead,pressure,pointerID,eventType,elapDistTot,bodySpeed,relDist,endTime};
 		String dataPre = Arrays.toString(content);
 		String data = dataPre.replace("[","").replace("]","").replaceAll(",",""); // set proper format of output file, because Arrays.toString() has a standard format of adding brackets and commas
 		try {
-
 			// create new output file at specified directory
 			String sesFileString = "C:\\Users\\Public/sesFile_" + "A" + animalID + "P" + protocolID + "S" + sessionID + ".txt";
 			File sesFile = new File(sesFileString);
@@ -407,7 +413,7 @@ class PolyTouchGUI extends JPanel implements PointerEventListener {
 	private static final int EVENT_TYPE_BUTTON_UP = 6;
 	private static final int EVENT_TYPE_IN_RANGE = 7;
 	private static final int EVENT_TYPE_OUT_OF_RANGE = 8;
-	private String genereateStateLog( int pointerID, int eventType) {
+	private String genereateStateLog( int pointerID, int eventType) {	
 		String STRING = "";
 		switch ( eventType ) {
 		case EVENT_TYPE_DRAG :
@@ -487,7 +493,7 @@ class TriggerSound {
 	private static SourceDataLine LINE;   // to play the sound
 	private static byte[] BUFFER;         // initialise internal buffer
 	private static int bufferSize = 0;    // number of samples currently in internal buffer	
-	private static float GAIN = 0f; // set at 0f initially to ignore first beep
+	private static float GAIN = 0f; 	// set at 0f initially to ignore first beep
 	
 	// open up new audio stream
 	private static void init() {
@@ -498,15 +504,7 @@ class TriggerSound {
 			LINE = (SourceDataLine) AudioSystem.getLine(info);
 			LINE.open(format, SAMPLE_BUFFER_SIZE * BYTES_PER_SAMPLE); // original code; acquires the system resources
 
-			// Modify master audio volume of system
-			// trigger sound tone
-			if (sessionID == 2) {
-				GAIN = 0.6f; // low (39dB)
-			} else if (sessionID == 3) {
-				GAIN = 0.8f; // intermediate (49dB)
-			} else if (sessionID == 4) {
-				GAIN = 1f; // high (59dB)
-			}			
+			GAIN = 0;
 			FloatControl VOLUME = (FloatControl) LINE.getControl(FloatControl.Type.MASTER_GAIN);
 			VOLUME.setValue(VOLUME.getMinimum() * (1 - GAIN));
 
@@ -514,7 +512,7 @@ class TriggerSound {
 			// it gets divided because we can't expect the buffered data to line up exactly with when
 			// the sound card decides to push out its samples.
 			BUFFER = new byte[SAMPLE_BUFFER_SIZE * BYTES_PER_SAMPLE/3];
-
+			
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			System.exit(1);
@@ -591,7 +589,7 @@ class TriggerSound {
 	void playSoundStatic() {
 		init();
 		play(createSineWave(toneFreq,sessionDur));
-		close();
+		//close();
 	}
 
 	void playSoundDiscr () throws IOException {
@@ -612,46 +610,47 @@ class TriggerSound {
 			relDistLast = Double.parseDouble(relDistLastString);
 			lastEvent = Double.parseDouble(lastEventString);
 			
-			// Stimulus condition 1: if animal is in target zone
-			// Stimulus condition 2: only trigger feedback if PolyTouchGUI is running (tracked time > 0.0 sec)			
+			// Stimulus condition: only trigger feedback if PolyTouchGUI is running (tracked time > 0.0 sec)			
 			// optional: create stimulus protocol where condition depends on relative distance and basic behavioural state (e.g. mobile vs immobile)
 			if (relDistLast < targetZoneRad && lastTime > 0.0) {
-				// play sound; original approach (with screeching sound)
-				init();
-				play(createSineWave(toneFreq,toneDur));
-				// close();
-				
-				// Save feedback trigger time stamp in external file
-				Object content[]; 
-				BufferedWriter varout = null;
-				endTimeNs2 = (System.nanoTime() - startTime2 - dStartTime2); // compute elapsed time in nanoseconds (relative from start time first loop)
-				
-				// define content of external file
-				content = new Object[] {relDistLast,endTimeNs2};
-				String dataPre = Arrays.toString(content);
-				String data = dataPre.replace("[","").replace("]","").replaceAll(",",""); // set proper format of output file, because Arrays.toString() has a standard format of adding brackets and commas
+				GAIN = 0.6f;
+				FloatControl VOLUME = (FloatControl) LINE.getControl(FloatControl.Type.MASTER_GAIN);
+				VOLUME.setValue(VOLUME.getMinimum() * (1 - GAIN));
+			} else {
+				GAIN = 0f;
+				FloatControl VOLUME = (FloatControl) LINE.getControl(FloatControl.Type.MASTER_GAIN);
+				VOLUME.setValue(VOLUME.getMinimum() * (1 - GAIN));
+				}
+	
+			// Save feedback trigger time stamp in external file
+			Object content[]; 
+			BufferedWriter varout = null;
+			endTimeNs2 = (System.nanoTime() - startTime2 - dStartTime2); // compute elapsed time in nanoseconds (relative from start time first loop)
+			
+			// define content of external file
+			content = new Object[] {relDistLast,endTimeNs2};			
+			String dataPre = Arrays.toString(content);
+			String data = dataPre.replace("[","").replace("]","").replaceAll(",",""); // set proper format of output file, because Arrays.toString() has a standard format of adding brackets and commas
+			try {
+				String audioFileString = "C:\\Users\\Public/sesAudioFile_" + "A" + animalID + "P" + protocolID + "S" + sessionID + ".txt";
+				File audioFile = 
+						new File(audioFileString);
+				varout = new BufferedWriter(new FileWriter(audioFile, true));
+				varout.write(data); // save content as array
+				varout.newLine(); // save content at new line
+				varout.flush();
+				varout.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
 				try {
-					String audioFileString = "C:\\Users\\Public/sesAudioFile_" + "A" + animalID + "P" + protocolID + "S" + sessionID + ".txt";
-					File audioFile = 
-							new File(audioFileString);
-					varout = new BufferedWriter(new FileWriter(audioFile, true));
-					varout.write(data); // save content as array
-					varout.newLine(); // save content at new line
-					varout.flush();
-					varout.close();
+					if (varout != null) { 
+						varout.close();
+					}
 				} catch (IOException e) {
 					e.printStackTrace();
-				} finally {
-					try {
-						if (varout != null) { 
-							varout.close();
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
 				}
-			} // end if within border
-			
+			}
 		} // end check if sesFile exists
 	} // end method generate sound
 
@@ -696,7 +695,7 @@ class TriggerSound {
 					String dataPre = Arrays.toString(content);
 					String data = dataPre.replace("[","").replace("]","").replaceAll(",",""); // set proper format of output file, because Arrays.toString() has a standard format of adding brackets and commas
 					try {
-						String audioFileString = "C:\\Users\\Public/sesAudioFile_" + "A" + animalID + "P" + protocolID + "S" + sessionID + ".txt";
+						String audioFileString = "C:\\Users\\Public\\sesAudioFile_" + "A" + animalID + "P" + protocolID + "S" + sessionID + ".txt";
 						File audioFile = 
 								new File(audioFileString);
 						varout = new BufferedWriter(new FileWriter(audioFile, true));
@@ -715,9 +714,9 @@ class TriggerSound {
 							e.printStackTrace();
 						}
 					}
-					close(); // close audio stream to ensure clean sound for next tone
-				} // end run
-			},delay); // end TimerTask // end scheduleAtFixedRate
+					close();
+				}
+			},delay);
 		} else {
 			System.out.println("Session duration reached. Mouse tracking is terminated...");
 			System.exit(0);
@@ -799,9 +798,8 @@ class TriggerSound {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-			}		
-			// close();
-		} // end check if sesFileJK exists
+			}
+		}
 	}
 
 	// SESSION 3 
@@ -945,8 +943,8 @@ public class PolyTouch {
 						PolyTouch newPolyTouchGUI = new PolyTouch();
 						newPolyTouchGUI.pointerUI();
 						System.out.println("Initiated new pointerGUI...");						
-					} // run Swing
-				} // invoke Swing later
+					}
+				}
 				);
 
 		/** --- CLOSE-LOOP FEEDBACK THREAD --- */
@@ -954,14 +952,23 @@ public class PolyTouch {
 			// schedule feedback protocol 1: 
 			// generate discrete 450Hz tone after delay of 0 ms (arg2) every 1 ms (arg3)
 			if (protocolID == 1) {
-				if (sessionID != 5) { // session 2-4; only provide feedback for non-baseline sessions					
+				if (sessionID != 5) { // session 2-4; only provide feedback for non-baseline sessions
+					Timer timerInitAudio = new Timer();
+					timerInitAudio.schedule(
+							new TimerTask() {
+								public void run() {
+									TriggerSound changeSound = new TriggerSound();
+									changeSound.playSoundStatic(); // with screeching sound
+								}
+							},0);
+	
 					Timer timerChangeAudio = new Timer();
 					timerChangeAudio.scheduleAtFixedRate(
 							new TimerTask() {
 								public void run() {
 									TriggerSound changeSound = new TriggerSound();
 									try {
-										changeSound.playSoundDiscr();
+										 changeSound.playSoundDiscr(); // with screeching sound
 									} catch (IOException e) {
 										e.printStackTrace();
 									}
@@ -975,7 +982,6 @@ public class PolyTouch {
 					for (int i = 0; i < 9; ++i ){
 						intRand.add(i);
 					} 
-
 					// generate pseudo-random numbers by shuffling array of numbers 1:9
 					Collections.shuffle(intRand);
 
@@ -1015,7 +1021,7 @@ public class PolyTouch {
 							} 
 						},0,1); // schedule timerAudio; arg2=delay(ms); arg3=period(ms);
 				System.out.println("Initializing continuous feedback protocol...");
-			} // check protocol id
+			}
 		}
 	}
 }
