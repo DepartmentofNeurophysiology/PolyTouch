@@ -3,6 +3,8 @@ PolyTouch is an open-source software written in JAVA that enables animal trackin
 
 The tracking algorithm makes use of open source jni4net (https://github.com/jni4net/jni4net/) and JWinPointer libraries (http://www.michaelmcguffin.com/code/JWinPointer/). It performs behavioral classification based on the temporal and directional changes in body motion. The user interface displays the current animal position (in X,Y), center-of-mass (COM) position, elapsed time, distance travelled, body speed, relative position of the (virtual) target, and basic behavioral states during data acquisition. Depending on the relative distance between the ground and the sensor, different portions of the body including limbs, tail, and head can be detected. For the experiments described herein, the sensor was placed on a flat plexiglass sheet for limb detection (Figure 1C).  Behavioral state identification was based on motion profiling of the animal and included discrete states of animal “moving” (body speed > 1 cm/sec), “immobile” (body < 1 cm/sec), and advancing “on the ground” or “off the ground”, as the body part moves out of the 2D plane. Simple behavioral state classification allows the user to monitor animal behavior, which could also be used to trigger stimulus feedback. The touch events are updated and exported to an ASCII file as comma separated values.
 
+Citation: Lim J, Celikel T. Real-time contextual feedback for close-loop control of navigation. J Neural Eng. 2019;16(6):065001. doi:10.1088/1741-2552/ab2ffa
+
 ## Getting started
 Download files (ZIP)
 
